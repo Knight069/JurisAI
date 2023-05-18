@@ -1,0 +1,217 @@
+{% extends 'base.html' %} {% load static %} {% block title %}JurisAI -
+Home{%endblock %} {% block content %}
+
+<div class="container">
+  <h1 class="text-center my-3">Your Personal Legal Assitant</h1>
+
+  <div class="chat">
+    <pre id="prompt">
+User: Hi, What can you do for me?
+JurisAI: Your personal chatbot is here.
+    </pre>
+    <div class="form-floating">
+      <textarea
+        class="form-control"
+        placeholder="Leave a comment here"
+        id="typedPrompt"
+        oninput="autoResize(this)"
+      ></textarea>
+      <!-- <label for="typedPrompt">Comments</label> -->
+    </div>
+    {% csrf_token %}
+    <button type="button" id="submit" class="btn btn-dark my-3">send</button>
+  </div>
+</div>
+
+<script>
+  // for resizing textarea
+  function autoResize(textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+  }
+
+  let csrfmiddlewaretoken = document.querySelector("input[type=hidden]").value;
+  console.log(csrfmiddlewaretoken);
+
+  const fetchData = async (myPrompt) => {
+    let data = new FormData();
+    data.append("prompt", myPrompt);
+    data.append("csrfmiddlewaretoken", csrfmiddlewaretoken);
+
+    let a = await fetch("/api", {
+      method: "POST",
+      body: data,
+      credentials: "same-origin",
+    });
+    let r = await a.json();
+    return r;
+  };
+  submit.addEventListener("click", async () => {
+    let myPrompt =
+      document.getElementById("prompt").innerText +
+      "\nUser: " +
+      typedPrompt.value +
+      "\nJurisAI: ";
+    document.getElementById("prompt").innerText = myPrompt;
+    response = await fetchData(myPrompt);
+    document.getElementById("prompt").innerText +=
+      response.choices[0].message.content;
+    document.getElementById("typedPrompt").value = "";
+    //  response["choices"][0].text
+  });
+  //   response = await fetchData()
+  //   console.log(response);
+  // Sure, here's a script that meets your requirements:
+  window.addEventListener("DOMContentLoaded", () => {
+    // Create button element
+    const button = document.createElement("button");
+    button.textContent = "Submit File";
+    button.style.backgroundColor = "green";
+    button.style.color = "white";
+    button.style.padding = "5px";
+    button.style.border = "none";
+    button.style.borderRadius = "5px";
+    button.style.margin = "5px";
+
+    // Create progress element
+    const progress = document.createElement("progress");
+    progress.style.width = "99%";
+    progress.style.height = "5px";
+    progress.style.backgroundColor = "grey";
+
+    // Create progress bar
+    const progressBar = document.createElement("div");
+    progressBar.style.width = "0%";
+    progressBar.style.height = "100%";
+    progressBar.style.backgroundColor = "blue";
+
+    // Append progress bar to progress element
+    progress.appendChild(progressBar);
+
+    // Find target element to insert the button and progress element before
+    const targetElement = document.querySelector(
+      ".flex.flex-col.w-full.py-2.flex-grow.md\\:py-3.md\\:pl-4"
+    );
+
+    // Insert button and progress element before the target element
+    targetElement.parentNode.insertBefore(button, targetElement);
+    targetElement.parentNode.insertBefore(progress, targetElement);
+
+    // Function to handle file selection
+    const handleFileSelect = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+
+        // Read file as text
+        reader.readAsText(file);
+
+        // Split text into chunks of size 15000
+        let text = "";
+        let part = 1;
+        reader.onload = async (event) => {
+          text += event.target.result;
+          const chunkSize = 15000;
+          const numChunks = Math.ceil(text.length / chunkSize);
+
+          // Submit each chunk of text as a conversation
+          for (let i = 0; i < numChunks; i++) {
+            const chunk = text.slice(i * chunkSize, (i + 1) * chunkSize);
+            await submitConversation(chunk, part, file.name);
+            part++;
+
+            // Update progress bar
+            progressBar.style.width = `${((i + 1) / numChunks) * 100}%`;
+          }
+
+          // Set progress bar to blue when all chunks are submitted
+          progressBar.style.backgroundColor = "blue";
+        };
+      }
+    };
+
+    // Function to submit conversation
+    async function submitConversation(text, part, filename) {
+      const textarea = document.querySelector("textarea[tabindex='0']");
+      const enterKeyEvent = new KeyboardEvent("keydown", {
+        bubbles: true,
+        cancelable: true,
+        keyCode: 13,
+      });
+      textarea.value = `Part ${part} of ${filename}:\n\n${text}`;
+      textarea.dispatchEvent(enterKeyEvent);
+    }
+
+    // Event listener for button click
+    button.addEventListener("click", () => {
+      // Create file input element
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = ".txt, .js, .py, .html, .css, .json, .csv";
+
+      // Event listener for file selection
+      fileInput.addEventListener("change", handleFileSelect);
+
+      // Trigger file input click
+      fileInput.click();
+    });
+    // Check if chatgpt is ready
+    let chatgptReady = false;
+    const checkChatGptReady = async () => {
+      while (!chatgptReady) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        chatgptReady = !document.querySelector(
+          ".text-2xl > span:not(.invisible)"
+        );
+      }
+    };
+
+    checkChatGptReady();
+  });
+</script>
+
+<style>
+  .chat {
+    max-height: 70vh; /* Adjust the height as needed */
+    overflow-y: auto;
+  }
+  body {
+    background-color: #f5f5f5; /* Set your desired background color */
+    font-family: Arial, sans-serif; /* Set your desired font family */
+  }
+
+  .container {
+    background-color: #ffffff; /* Set container background color */
+    padding: 20px;
+    margin-top: 50px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  h1 {
+    color: #333333; /* Set header text color */
+  }
+
+  .chat {
+    max-height: 70vh; /* Adjust the height as needed */
+    overflow-y: auto;
+    background-color: #ffffff; /* Set chat container background color */
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  #typedPrompt {
+    resize: none;
+    font-size: 16px; /* Set textarea font size */
+  }
+
+  .btn {
+    background-color: #333333; /* Set button background color */
+    color: #ffffff; /* Set button text color */
+    font-size: 16px; /* Set button font size */
+  }
+</style>
+
+{% endblock %}
