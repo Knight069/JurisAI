@@ -2,8 +2,10 @@ from django.shortcuts import render, HttpResponse
 import os
 from django.http import JsonResponse
 import openai
+import langchain
 
-openai.api_key = 'OPENAI_API_KEY'
+openai.api_key = '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'
+indiankanoon_api_key = 'f7d1f89ccb2c2e0a1fedc2fc1374654880fc4db7'
 
 
 
@@ -47,12 +49,12 @@ def chatAPI(request):
         ]
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=messages,
             temperature=0.1,
             max_tokens=None,
             top_p=1,
-            frequency_penalty=5,
+            frequency_penalty=2,
             presence_penalty=2
         )
         print(response)
