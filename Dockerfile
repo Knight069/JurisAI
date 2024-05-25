@@ -1,23 +1,29 @@
-# Use a slim Python image
-FROM python:3.9-slim
+# Use an official Python runtime as a parent image
+FROM python:3.9
 
-# Set working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy requirements.txt
-COPY requirements.txt ./
+# Copy the Pipfile and Pipfile.lock into the container at /app
+COPY Pipfile Pipfile.lock /app/
 
-# Install dependencies using Pipenv
+# Install pipenv
 RUN pip install pipenv
 
-# Install project dependencies
-RUN pipenv install --system
+# Install dependencies
+RUN pipenv install --system --deploy
 
-# Copy project code
-COPY . .
+# Copy the current directory contents into the container at /app
+COPY . /app/
 
-# Expose port for the Flask server (modify if needed)
-EXPOSE 5000
+# Install Redis server
+RUN apt-get update && apt-get install -y redis-server
 
-# Run the development command with Pipenv
-CMD ["pipenv", "shell", "inv", "dev"]
+# Expose port 5000 for Flask app and port 6379 for Redis
+EXPOSE 5000 6379
+
+# Start Redis server
+RUN service redis-server start
+
+# Command to run the Python server
+CMD ["pipenv", "run", "inv", "dev"]

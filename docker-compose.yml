@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    command: pipenv run inv dev
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+
+  worker:
+    build: .
+    command: pipenv run inv devworker
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
